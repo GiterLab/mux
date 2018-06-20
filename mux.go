@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/GiterLab/groupcache/consistenthash"
-	"github.com/tobyzxj/uuid"
 )
 
 // HandlerCallBack 处理回调函数
@@ -30,7 +29,7 @@ type Consumer struct {
 }
 
 // Process 数据处理，并发处理
-func Process(procNum int, channelLen int, timeoutSec int, m *consistenthash.Map, messaageHandler HandlerCallBack, message <-chan []byte, distributeKeyHandler GetdistributeKeyCallBack, timeoutHandler HandlerTimeoutCallBack) error {
+func Process(procArr []string, channelLen int, timeoutSec int, m *consistenthash.Map, messaageHandler HandlerCallBack, message <-chan []byte, distributeKeyHandler GetdistributeKeyCallBack, timeoutHandler HandlerTimeoutCallBack) error {
 	var consumerList []Consumer
 	var consumerListMap map[string]int // bucketName 对应的index序号，优化查询速度
 
@@ -40,13 +39,14 @@ func Process(procNum int, channelLen int, timeoutSec int, m *consistenthash.Map,
 		}
 	}
 
+	procNum := len(procArr)
 	if procNum == 0 || channelLen == 0 || timeoutSec == 0 || m == nil || messaageHandler == nil || distributeKeyHandler == nil {
 		return errors.New(" m *consistenthash.Map is nil")
 	}
 	consumerList = make([]Consumer, procNum)
 	consumerListMap = make(map[string]int, procNum)
 	for index := 0; index < procNum; index++ {
-		consumerList[index].bucketName = uuid.New()
+		consumerList[index].bucketName = procArr[index]
 		consumerList[index].msgChannel = make(chan []byte, channelLen)
 		consumerListMap[consumerList[index].bucketName] = index
 		m.Add(consumerList[index].bucketName)
@@ -84,11 +84,11 @@ func Process(procNum int, channelLen int, timeoutSec int, m *consistenthash.Map,
 			case <-time.After(time.Duration(timeoutSec) * time.Second):
 				timeoutHandler()
 			case body, running = <-reading:
-				// all messages consumed
+			// all messages consumed
 				if !running {
 					fmt.Println("[mux] channel2 is close")
 				}
-				// 按分发键值分发给不同的处理函数
+			// 按分发键值分发给不同的处理函数
 				key := distributeKeyHandler(body)
 				bucketName := m.Get(key)
 				index := consumerListMap[bucketName]

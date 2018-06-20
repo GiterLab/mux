@@ -33,11 +33,15 @@ func main() {
 	timeStart = time.Now()
 	// 1. 创建mux实例
 	m := mux.New(1000, nil)
-	// 2. 定义好消息的处理函数、分发键值处理函数和消息超时处理函数
-	mux.Process(100, 1000, 5, m, MessageHandler, msg, GetdistributeKey, TimeoutHandler)
+	procArr := make([]string,3)
+	procArr[0]="a"
+	procArr[1]="b"
+	procArr[2]="c"
+	// 3. 定义好消息的处理函数、分发键值处理函数和消息超时处理函数
+	mux.Process(procArr, 1000, 5, m, MessageHandler, msg, GetdistributeKey, TimeoutHandler)
 
 	// 模拟一些数据
-	for index := 0; index < 100; index++ {
+	for index := 0; index < 3; index++ {
 		b := bytes.Buffer{}
 		b.WriteString(fmt.Sprintf("%d", index))
 		msg <- b.Bytes()
