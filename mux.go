@@ -12,7 +12,7 @@ import (
 type HandlerCallBack func(bucketName string, msg []byte)
 
 // GetdistributeKeyCallBack 获取分发键值
-type GetdistributeKeyCallBack func(msg []byte) string
+type GetdistributeKeyCallBack func(msg []byte) (key string, err error)
 
 // HandlerTimeoutCallBack 数据处理超时回调函数,一般用于数据流监控, 监控数据是否产生出现了异常
 type HandlerTimeoutCallBack func()
@@ -89,10 +89,12 @@ func Process(procArr []string, channelLen int, timeoutSec int, m *consistenthash
 					fmt.Println("[mux] channel2 is close")
 				}
 			// 按分发键值分发给不同的处理函数
-				key := distributeKeyHandler(body)
-				bucketName := m.Get(key)
-				index := consumerListMap[bucketName]
-				consumerList[index].msgChannel <- body
+				key, err := distributeKeyHandler(body)
+				if err == nil {
+					bucketName := m.Get(key)
+					index := consumerListMap[bucketName]
+					consumerList[index].msgChannel <- body
+				}
 			}
 		}
 	}()

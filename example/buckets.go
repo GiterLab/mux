@@ -17,8 +17,8 @@ func MessageHandler(bucketName string, msg []byte) {
 }
 
 // GetdistributeKey 获取分发键值
-func GetdistributeKey(msg []byte) string {
-	return string(msg)
+func GetdistributeKey(msg []byte) (key string, err error) {
+	return string(msg),nil
 }
 
 // TimeoutHandler 时间超时处理函数
