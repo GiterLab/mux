@@ -84,17 +84,19 @@ func Process(procArr []string, channelLen int, timeoutSec int, m *consistenthash
 			case <-time.After(time.Duration(timeoutSec) * time.Second):
 				timeoutHandler()
 			case body, running = <-reading:
-			// all messages consumed
+				// all messages consumed
 				if !running {
 					fmt.Println("[mux] channel2 is close")
+				} else{
+					// 按分发键值分发给不同的处理函数
+					key, err := distributeKeyHandler(body)
+					if err == nil {
+						bucketName := m.Get(key)
+						index := consumerListMap[bucketName]
+						consumerList[index].msgChannel <- body
+					}
 				}
-			// 按分发键值分发给不同的处理函数
-				key, err := distributeKeyHandler(body)
-				if err == nil {
-					bucketName := m.Get(key)
-					index := consumerListMap[bucketName]
-					consumerList[index].msgChannel <- body
-				}
+
 			}
 		}
 	}()
